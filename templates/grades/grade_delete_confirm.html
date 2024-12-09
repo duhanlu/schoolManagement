@@ -1,0 +1,23 @@
+{% extends 'base.html'%}
+{% load static %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/form.css'%}">
+<div class = "bottom">
+    <div class = "container">
+        <h1 style="text-align:center">Comfirm to delete? </h1>
+        <p>Are you sure to delete [ {{ grade.grade_name }} ]? This operation can not be withdrew </p>
+        <form action="" method="post" class = "text-align:center">
+            {% csrf_token %}
+        <div class="handleButton">
+            <button type="submit" id="cancelButton"> Comfirm Delete </button>
+        
+        <a href="{% url 'grades_list' %}">
+            <button type="button">Cancel</button>
+        </a>
+        </div>
+
+    </form>
+    </div>
+</div>
+{% endblock %}
