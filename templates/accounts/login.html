@@ -1,0 +1,155 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/base.css' %}">
+    <link rel="stylesheet" href="{% static 'css/login.css' %}">
+    <link rel="stylesheet" href="{% static 'css/sweetalert2.css' %}">
+    <script src="{% static 'js/sweetalert2.js' %}" ></script>
+</head>
+<body>
+ <div class="wrapper" style="background-image: url('{% static 'images/loginpage.jpg' %}');">
+ <div class=title>大熊课堂<span>学生管理系统</span></div>
+ <div class=container>
+ <form action=# method=post id=loginForm>
+ <h2>登录</h2>
+ <div class="input-group">
+ <label for="role">选择身份:</label>
+ <div class="radio-group">
+ <input type="radio" id="admin" name="role" value=admin>
+ <label for="admin">Manager</label>
+ 
+ <input type="radio" id="teacher" name="role" value="teacher">
+ <label for="teacher">Teacher</label>
+ 
+ <input type="radio" id="student" name="role" value="student">
+ <label for="student">Student</label>
+ </div>
+ </div>
+ <div class="input-grou"p>
+ <label for="username">你的账号:</label>
+ <input type="text" id="username" name="username" required value>
+ </div>
+ <div class="input-group">
+ <label for="password">你的密码:</label>
+ <input type="password" id="password" name="password" required value>
+ </div>
+ <div class="input-group">
+ <input type="checkbox" id="remember" name="remember" class="custom-checkbox">
+ <label for="remember">记住我的密码</label>
+ </div>
+ <button type="button" onclick="submitLogin()">登 录</button>
+ <p class="forget">忘记密码了？请点击!!!</p>
+ </form>
+ </div>
+ </div>
+
+ <script>
+    function updateLabels() {
+        var selectedRoleRadio = document.querySelector('input[name="role"]:checked');
+        var usernameLabel = document.querySelector('label[for="username"]');
+        var passwordLabel = document.querySelector('label[for="password"]');
+
+        if (selectedRoleRadio) {
+            var selectedRole = selectedRoleRadio.value;
+            switch (selectedRole) {
+                case 'admin':
+                    usernameLabel.textContent = 'User name:';
+                    passwordLabel.textContent = 'Password:';
+                    break;
+                case 'teacher':
+                    usernameLabel.textContent = 'phone number:';
+                    passwordLabel.textContent = 'Password:';
+                    break;
+                case 'student':
+                    usernameLabel.textContent = 'student number:';
+                    passwordLabel.textContent = 'Password:';
+                    break;
+            }
+        }else {
+            usernameLabel.textContent = 'Your account: ';
+            passwordLabel.textContent = 'Your password:';
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        var radios = document.querySelectorAll('input[type="radio"][name="role"]');
+
+        radios.forEach(function (radio) {
+            radio.addEventListener('change', updateLabels);
+        });
+
+        updateLabels();
+    })
+
+    function submitLogin() {
+        console.log('entered the function')
+        if (!validateForm()) return;
+
+        var csrftoken = '{{ csrf_token }}'
+
+        var formElement = document.getElementById('loginForm')
+        var formData = new FormData(formElement)
+        formData.append('csrfmiddlewaretoken', csrftoken);
+
+        fetch('/login/', {
+            method: 'POST',
+            body: formData,
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log(data.messages)
+            if (data.status === 'success') {
+                Swal.fire({
+                    icon: "success",
+                    title: "Login Successfully",
+                    timer: 1500,
+                    didClose: () => {
+                        console.log(data.role)
+                        if (data.role === 'student') {
+                            window.location.href = '{% url "my_scores" %}'
+                        }else {
+                            window.location.href = "/";
+                        }
+                    }
+                })
+
+            }else{
+                Swal.fire({
+                    icon: "error",
+                    title: data.messages,
+
+                })
+            }
+        })
+    }
+
+    function validateForm() {
+        const selectedRadio = document.querySelector('input[name="role"]:checked');
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+        if (!selectedRadio) {
+            showAlert('Oops...', 'Please select a role');
+            return false;
+        }
+        if (!username.length) {
+            usernameLabel = document.querySelector('label[for="username"]').textContent.slice(0, -1);
+            showAlert('Oops...', usernameLabel + 'Can not be empty');
+            return false;
+        }
+        if (password === '') {
+            showAlert('Oops...', 'password cannot be empty');
+            return false;
+        }
+
+        return true
+    }
+    function showAlert(title, message) {
+        alert(`${title}: ${message}`);
+    }
+ </script>

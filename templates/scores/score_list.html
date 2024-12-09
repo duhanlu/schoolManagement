@@ -1,0 +1,324 @@
+{% extends 'base.html' %}
+
+{% load url_utils %}
+
+{% block content %}
+  
+<div class="right">
+  <div class="top">
+      <div class="tool">
+          <div class="class-info">
+              <form method="get" action="{% url 'score_list' %}">
+                <span>Class: {{ current_grade }}</span>
+                <select name="grade">
+                    <option value selected> Please Select Class</option>
+                    {% for grade in grades %}
+                        <option value="{{ grade.pk }}" {% if grade.pk|stringformat:"s" == current_grade %} selected {% endif %}> 
+                            {{ grade.grade_name }}</option>
+                    {% endfor %}
+                </select>
+                  <span>Student name:</span>
+                  <input type="text" name="search" placeholder="Search Student..." value="">
+                  <input type="submit" value="搜索">
+              </form>
+          </div>
+          <div class = "actions">
+            <button type="button" class ="add" id="add">Add</button>
+            <button type="button" class="del-all" id = "del-all">Delete</button>
+            <button type="button" class="import" id ="import">Import</button>
+            <button type="button" class="export" id = "export">Export</button>
+          </div>
+      </div>
+  </div>
+  <div class="bottom">
+  <table>
+      <thead>
+          <tr>
+            <th><input type="checkbox" id='select-all'></th>
+              <th>Exam Name</th>
+              <th>Class</th>
+              <th>Student Name</th>
+              <th>Student Number</th>
+              <th>Math Score</th>
+              <th>History Score</th>
+              <th>Science Score</th>
+          </tr>
+      </thead>
+      <tbody>
+        {% for score in scores %}
+          <tr>
+            <td><input type="checkbox" name="teacher_ids" value="{{ teacher.pk }}"></td>
+              <td>{{ score.title }}</td>
+              <td>{{ score.grade}}</td>
+              <td>{{ score.student_name }}</td>
+              <td>{{ score.student_number }}</td>
+              <td>{{ score.math_score }}</td>
+              <td>{{ score.history_score }}</td>
+              <td>{{ score.science_score }}</td>
+              <td>
+                  <a href="{% url 'score_update' score.pk %}" class = "btn btn-primary btn-sm edit">Edit</a>
+                  <a href="{% url 'score_delete' score.pk %}" class="btn btn-danger btn-sm del">Delete</a>
+              </td>
+          </tr>
+        
+        {% endfor %}
+        
+    <!-- 分页导航 -->
+  <div class="pagination">
+    <span class="step-links">
+        {% if page_obj.has_previous %}
+            <a href="?{% search_url request page=1 %}">&laquo;First Page</a>
+            <a href="?{% search_url request page=page_obj.previous_page_number %}">Last Page</a>
+        {% endif %}
+        <span class="current">
+            {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+        </span>
+
+        {% if page_obj.has_next %}
+        <a href="?page={% search_url request page=page_obj.next_page_number %}">Next Page</a>
+        <a href="?page={% search_url request page=page_obj.paginator.num_pages %}">Last Page&raquo; </a>
+        {% endif %}
+    </span>
+ </div>
+        
+          
+      </tbody>
+  </table>
+<script>
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const selectAllCheckbox = document.getElementById('select-all');
+
+        selectAllCheckbox.addEventListener('change', function() {
+            const studentCheckboxes = document.querySelectorAll('input[name="teacher_ids"]');
+
+            studentCheckboxes.forEach(function(checkbox) {
+                checkbox.checked = selectAllCheckbox.checked;
+            });
+        });
+    });
+
+    document.getElementById('del-all').addEventListener('click', function(){
+        const checkboxes = document.querySelectorAll('input[name="teacher_ids"]:checked');
+        if (checkboxes.length === 0) {
+            Swal.fire({
+                title: "Error",
+                text: "Please select students that you want to delete",
+                icon: "error",
+                confirmButtonText: "Ok"
+            });
+            return ;
+        } else {
+            Swal.fire({
+                title: "Confirm selected student",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonText: "Delete",
+                confirmButtonColor: "#d33"
+            })
+            .then((result) => {
+                if (result.isConfirmed) {
+                    const formData = new FormData()
+                    checkboxes.forEach((checkbox) => {
+                        formData.append('student_ids', checkbox.value)
+                    })
+                    fetch("{% url 'student_bulk_delete' %}", {
+                        method: 'POST',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRFToken': '{{ csrf_token }}',
+                        },
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success'){
+                            Swal.fire("Deleted!", data.messages, "success");
+                            window.location.reload();
+                        }else {
+                            Swal.fire("Error!", data.messages, "error")
+                        }
+    
+                    })
+                }
+            })
+        }
+
+    })
+    
+
+    document.getElementById('add').addEventListener('click', function(){
+        Swal.fire({
+            position: "top-end",
+            html: `<iframe src="{% url 'score_create'%}" width="100%", height="800px" frameborder="0"> <iframe>`,
+            width: 600,
+            showConfirmButton: false
+        });
+    });
+
+
+    document.querySelectorAll('.edit').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault(); // prevent 跳转
+            url = this.getAttribute('href')
+            console.log(url)
+            Swal.fire({
+                position: "top-end",
+                html: `<iframe src="${url}" width="100%", height="800px" frameborder="0"> <iframe>`,
+                width: 600,
+                showConfirmButton: false,
+            });
+        })
+    })
+
+    document.querySelectorAll('.btn-danger').forEach(button => {
+        button.addEventListener('click', function(e){
+            e.preventDefault();
+            url = this.getAttribute('href')
+            Swal.fire({
+                title: "Confirm Delete?",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonText: "Delete",
+                confirmButtonColor: "#d33",
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // send data to the backend
+                    fetch(url, {
+                        method: 'DELETE',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRFToken': '{{ csrf_token }}',
+                        },
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            Swal.fire("Deleted!", data.messages, "success");
+                            window.location.reload();
+                        } else {
+                            Swal.fire("Error!", data.messages, "error")
+                        }
+                    })
+                }
+            })
+        })
+    })
+
+    document.getElementById('import').addEventListener('click', function() {
+        Swal.fire({
+            title: 'upload excel file of student information',
+            input: 'file',
+            inputAttributes: {
+                'accept': '.xlsx',
+                'aria-label': 'Upload your excel file'
+            },
+            showCancelButton: true,
+            confirmButtonText: 'Upload',
+            showLoaderOnConfirm: true,
+            preConfirm: (file) => {
+                const formData = new FormData();
+                formData.append('excel_file', file)
+            
+                return fetch('{% url "upload_student" %}', {
+                    method: 'post',
+                    headers: {
+                        'X-CSRFToken': "{{ csrf_token }}"
+                    },
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status == 'success'){
+                        Swal.fire('Uploaded', data.messages, 'success');
+                    }else {
+                        Swal.fire('Error', data.messages)
+                    }
+                })
+                .catch(error => {
+                    console.log(error);
+                    Swal.showValidationMessage(`${error.messages || error }`);
+                });
+            },
+            allowOutsideClick: () => !Swal.isLoading()
+        }).then((result) => {
+            if (result.isConfirmd){
+                Swal.fire({
+                    title: 'Uploaded!',
+                    text: 'Upload successfully'
+                })
+                window.location.reload();
+            }
+        })
+    }) 
+
+    document.getElementById('export').addEventListener('click', function(){
+        var select = document.querySelector('select[name="grade"]');
+        var value = select.value
+        var gradeText = select.options[select.selectedIndex].text;
+
+        if (!value) {
+            Swal.fire({
+                title: 'Error!',
+                text: 'Please select a class',
+                icon: 'error',
+                confirmButtonText: 'Confirm'
+            });
+            return ;
+        }
+
+        Swal.fire({
+            title: 'Confirm',
+            text: 'Export ' + gradeText + 'teacher information',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Confirm',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+            fetch('{% url "export_excel" %}',{
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({grade: value})
+            })
+            .then(response => {
+                if(!response.ok) {
+                    response.json().then(result => {
+                        Swal.fire({
+                            title: 'Download Failure',
+                            text: 'Server Error: ' + result.messages,
+                            icon: 'error',
+                            confirmButtonText: 'Close'
+                        });
+                    });
+                    throw new Error('Network or Server Error');
+                }
+                return response.blob();
+            })
+            .then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = gradeText + '.xlsx';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+            })
+            .catch(error => {
+                console.error('Download Fails', error);
+                Swal.fire({
+                    title: 'Error',
+                    text: 'Download error, please try again',
+                    icon: 'error',
+                    confirmButtonText: 'Close'
+                });
+            })
+        })
+    })
+</script>
+{% endblock %}
+

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>大熊课堂校园管理系统</title>
+  <link rel="stylesheet" href="static/css/base.css">
+  <link rel="stylesheet" href="static/css/index.css">
+  <link rel="stylesheet" href="static/css/iconfont.css">
+  <link rel="stylesheet" href="static/css/sweetalert2.css">
+  <link rel="stylesheet" href="static/css/form.css">
+  <script src="static/js/sweetalert2.js" ></script>
+
+</head>
+
+<body>
+	<div class=container>
+ 
+ <h2>添加学生信息</h2>
+ 
+ <form method=post>
+ 
+ 
+ <div class=form-group>
+ <label for=id_student_name>姓名:</label>
+ <input type=text name=student_name maxlength=50 required id=id_student_name value>
+ 
+ </div>
+ 
+ <div class=form-group>
+ <label for=id_student_number>学籍号:</label>
+ <input type=text name=student_number maxlength=20 required id=id_student_number value>
+ 
+ </div>
+ 
+ <div class=form-group>
+ <label for=id_grade>班级:</label>
+ <select name=grade required id=id_grade>
+  <option value selected>---------</option>
+
+  <option value=8>1年1班</option>
+
+  <option value=6>1年2班</option>
+
+  <option value=7>1年3班</option>
+
+  <option value=9>1年4班</option>
+
+  <option value=10>1年5班</option>
+
+</select>
+ 
+ </div>
+ 
+ <div class=form-group>
+ <label for=id_gender>性别:</label>
+ <select name=gender required id=id_gender>
+  <option value selected>---------</option>
+
+  <option value=M>男</option>
+
+  <option value=F>女</option>
+
+</select>
+ 
+ </div>
+ 
+ <div class=form-group>
+ <label for=id_birthday>出生日期:</label>
+ <input type=text name=birthday required aria-describedby=id_birthday_helptext id=id_birthday value>
+ 
+ <small class="form-text text-muted">格式例如：2020-05-01</small>
+ 
+ </div>
+ 
+ <div class=form-group>
+ <label for=id_contact_number>联系方式:</label>
+ <input type=text name=contact_number maxlength=20 required id=id_contact_number value>
+ 
+ </div>
+ 
+ <div class=form-group>
+ <label for=id_address>家庭住址:</label>
+ <textarea name=address cols=40 rows=10 required id=id_address></textarea>
+ 
+ </div>
+ 
+ <div class=handleButton>
+ <button type=submit id=saveButton>保存</button>
+ <button type=button id=cancelButton>取消</button>
+ </div>
+ </form>
+</div>
+ 
